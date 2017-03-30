@@ -32,7 +32,7 @@ const unsigned int ZT=TARGET_R;
 // victory distance
 const unsigned int VD=PLAYER_R+TARGET_R;
 
-// sefine display. Why 4? 'Cause Lady Ada said so.
+// define display. Why 4? 'Cause Lady Ada said so.
 #define OLED_RESET 4
 Adafruit_SSD1306 oled(OLED_RESET);
 
@@ -169,8 +169,8 @@ void loop() {
 
   // adjust and constrain position
   px+=ix; py+=iy;
-  px=px<ZP?ZP:px;px=px>mx?mx:px;
-  py=py<ZP?ZP:py;py=py>my?my:py;
+  px=px<ZP?ZP:px; px=px>mx?mx:px;
+  py=py<ZP?ZP:py; py=py>my?my:py;
 
   d=get_distance();
   if (d<VD){victory();}else{draw_field();}
