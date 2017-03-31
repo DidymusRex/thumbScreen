@@ -68,7 +68,7 @@ void init_game(){
   oled.clearDisplay();
   oled.setTextSize(4);
   oled.setTextColor(WHITE);
-  oled.setCursor(10,0);
+  oled.setCursor(35,18);
   oled.print("GO!");
   oled.display();
   delay(3000);
@@ -124,7 +124,7 @@ void victory(){
   // notify display
   oled.setTextSize(2);
   oled.setTextColor(WHITE);
-  oled.setCursor(10,0);
+  oled.setCursor(20,25);
   oled.print("Victory! ");
   oled.display();
 
@@ -163,7 +163,7 @@ void setup() {
 // -----------------------------------------------------------------------------
 void loop() {
   // get tumbstick vector
-  int ix = map(analogRead(A0),THUMB_MIN_X,THUMB_MAX_X,-3,3);
+  int ix = map(analogRead(A0),THUMB_MIN_X,THUMB_MAX_X,3,-3);
   int iy = map(analogRead(A1),THUMB_MIN_Y,THUMB_MAX_Y,-3,3);
 
   // adjust and constrain position
