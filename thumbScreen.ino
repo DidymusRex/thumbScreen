@@ -7,10 +7,10 @@
 #define LEDPIN 11
 
 // these values determined by experimentation, your mileage may vary.
-#define THUMB_MIN_X 30
-#define THUMB_MAX_X 630
-#define THUMB_MIN_Y 330
-#define THUMB_MAX_Y 990
+#define THUMB_MIN_X 0
+#define THUMB_MAX_X 1024
+#define THUMB_MIN_Y 0
+#define THUMB_MAX_Y 1024
 
 // player and target radii
 #define PLAYER_R 4
@@ -21,7 +21,6 @@
 // -------------------------------------
 // count micro-seconds
 long us;
-
 // player xy, target xy, max xy
 unsigned int px,py,tx,ty,mx,my,v,d;
 
@@ -86,7 +85,7 @@ void init_game(){
 // Blink LED and show info on serial output
 void blynk(){
   digitalWrite(LEDPIN,HIGH);
-  delay(1);
+  delay(100);
   digitalWrite(LEDPIN,LOW);
 
   Serial.print("px: ");
