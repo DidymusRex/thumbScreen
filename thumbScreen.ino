@@ -4,9 +4,8 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
-#define LEDPIN 11
 
-// these values determined by experimentation, your mileage may vary.
+#define LEDPIN 11
 #define THUMB_MIN_X 0
 #define THUMB_MAX_X 1024
 #define THUMB_MIN_Y 0
@@ -21,6 +20,7 @@
 // -------------------------------------
 // count micro-seconds
 long us;
+
 // player xy, target xy, max xy
 unsigned int px,py,tx,ty,mx,my,v,d;
 
@@ -29,26 +29,39 @@ const unsigned int ZP=PLAYER_R;
 const unsigned int ZT=TARGET_R;
 
 // victory distance
-const unsigned int VD=PLAYER_R+TARGET_R;
+// const unsigned int VD=PLAYER_R+TARGET_R;
+// const unsigned int VD=TARGET_R;
+   const unsigned int VD=PLAYER_R;
 
 // define display. Why 4? 'Cause Lady Ada said so.
 #define OLED_RESET 4
 Adafruit_SSD1306 oled(OLED_RESET);
 
-// -------------------------------------
+// -----------------------------------------------------------------------------
 // begin functions
+// -----------------------------------------------------------------------------
+
 // -------------------------------------
 // place the target circle at a random position
-void place_target(){tx=random(ZT,mx);ty=random(ZT,my);}
+// -------------------------------------
+void place_target(){
+  tx=random(ZT,mx);
+  ty=random(ZT,my);
+}
 
+// -------------------------------------
 // start the player at a random position
+// -------------------------------------
 void place_player(){
   do{
     px=random(ZP,mx);
     py=random(ZP,my);
-  }while(get_distance()<VD);}
+  }while(get_distance()<VD);
+}
 
+// -------------------------------------
 // show target and player on display
+// -------------------------------------
 void draw_field(){
   oled.clearDisplay();
   oled.drawCircle(tx,ty,TARGET_R,WHITE);
@@ -56,7 +69,9 @@ void draw_field(){
   oled.display();
 }
 
+// -------------------------------------
 // initialize the game
+// -------------------------------------
 void init_game(){
   // get millis at start
   us=millis();
@@ -64,14 +79,22 @@ void init_game(){
   // seed the random generator from a floating analog pin
   randomSeed(analogRead(2));
 
+  digitalWrite(LEDPIN, LOW);
+
   // prompt
   oled.clearDisplay();
   oled.setTextSize(4);
   oled.setTextColor(WHITE);
   oled.setCursor(35,18);
   oled.print("GO!");
+  oled.setTextSize(1);
+  oled.setCursor(25,50);
+  oled.print("press to start");
   oled.display();
-  delay(3000);
+
+  while (digitalRead(12)){
+    delay(10);
+  }
 
   // initialize the target and player
   // note: it is possible to set PLAYER_R and TARGET_R relative to the
@@ -82,12 +105,10 @@ void init_game(){
   draw_field();
 }
 
+// -------------------------------------
 // Blink LED and show info on serial output
-void blynk(){
-  digitalWrite(LEDPIN,HIGH);
-  delay(100);
-  digitalWrite(LEDPIN,LOW);
-
+// -------------------------------------
+void syrial(){
   Serial.print("px: ");
   Serial.print(px);
   Serial.print(" py: ");
@@ -100,7 +121,9 @@ void blynk(){
   Serial.println(d);
 }
 
+// -------------------------------------
 // calculate distance from center of player to center of target
+// -------------------------------------
 unsigned int get_distance(){
   // pythagoras said a*a + b*b = c*c
   int a=px-tx;
@@ -109,10 +132,13 @@ unsigned int get_distance(){
   return round(sqrt(c2));
 }
 
+// -------------------------------------
 // what if you win?
+// -------------------------------------
 void victory(){
+  int j=0;
   // notify serial
-  blynk();
+  syrial();
   Serial.print("Victory! ");
   Serial.print(d);
   Serial.print(" vs. ");
@@ -122,6 +148,14 @@ void victory(){
   Serial.println(" seconds");
 
   // notify display
+  for (int i=0; i<20; i+=2){
+      digitalWrite(LEDPIN, j++%2);
+      oled.drawCircle(tx, ty, TARGET_R+i, WHITE);
+      oled.display();
+      delay(100);
+  }
+
+  oled.clearDisplay();
   oled.setTextSize(2);
   oled.setTextColor(WHITE);
   oled.setCursor(20,25);
@@ -129,7 +163,7 @@ void victory(){
   oled.display();
 
   // wait 5 seconds and restart
-  delay(5000);
+  delay(2000);
   init_game();
 }
 
@@ -175,7 +209,7 @@ void loop() {
   if (d<VD){victory();}else{draw_field();}
 
   // blink LED and output to serial once per second
-  if (millis()>us+5000){blynk();us=millis();}
+  if (millis()>us+5000){syrial();us=millis();}
 }
 // -----------------------------------------------------------------------------
 
