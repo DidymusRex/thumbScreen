@@ -5,7 +5,11 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 
-#define LEDPIN 11
+#define BLUPIN 13
+#define BTNPIN 12
+#define GRNPIN 11
+#define REDPIN 10
+
 #define THUMB_MIN_X 0
 #define THUMB_MAX_X 1024
 #define THUMB_MIN_Y 0
@@ -19,7 +23,7 @@
 // global variables
 // -------------------------------------
 // count micro-seconds
-long us;
+long us, init_us;
 
 // player xy, target xy, max xy
 unsigned int px,py,tx,ty,mx,my,v,d;
@@ -66,6 +70,10 @@ void draw_field(){
   oled.clearDisplay();
   oled.drawCircle(tx,ty,TARGET_R,WHITE);
   oled.fillCircle(px,py,PLAYER_R,WHITE);
+  
+  int w=map(millis()-init_us,0,10000,0,128);
+  oled.writeFillRect(0, 62, w, 3, WHITE);
+  //oled.drawFastHLine(127,61,t,WHITE);
   oled.display();
 }
 
@@ -75,13 +83,16 @@ void draw_field(){
 void init_game(){
   // get millis at start
   us=millis();
-
+  init_us=us;
+ 
   // seed the random generator from a floating analog pin
   randomSeed(analogRead(2));
 
-  digitalWrite(LEDPIN, LOW);
+  digitalWrite(GRNPIN, LOW);
+  digitalWrite(REDPIN, LOW);
+  digitalWrite(BLUPIN, HIGH);
 
-  // prompt
+  // prompt to start the game
   oled.clearDisplay();
   oled.setTextSize(4);
   oled.setTextColor(WHITE);
@@ -92,9 +103,9 @@ void init_game(){
   oled.print("press to start");
   oled.display();
 
-  while (digitalRead(12)){
-    delay(10);
-  }
+  // wait for the button push
+  while ( digitalRead(BTNPIN)){ delay(10); }
+  digitalWrite(BLUPIN, LOW);
 
   // initialize the target and player
   // note: it is possible to set PLAYER_R and TARGET_R relative to the
@@ -106,7 +117,7 @@ void init_game(){
 }
 
 // -------------------------------------
-// Blink LED and show info on serial output
+// show info on serial output
 // -------------------------------------
 void syrial(){
   Serial.print("px: ");
@@ -133,13 +144,23 @@ unsigned int get_distance(){
 }
 
 // -------------------------------------
-// what if you win?
+// game over, dude!
 // -------------------------------------
-void victory(){
-  int j=0;
-  // notify serial
-  syrial();
-  Serial.print("Victory! ");
+void game_over(int result){
+  int ex, ey;
+  char cry[9];
+  
+  if (result == 1){ // Victory!
+      digitalWrite(GRNPIN, HIGH);
+      sprintf(cry, "VICTORY!");
+      ex=tx; ey=ty;
+  } else {          // Defeat!
+      digitalWrite(REDPIN, HIGH);
+      sprintf(cry, "*DEFEAT*");
+      ex=px; ey=py;
+  }
+ 
+  Serial.print(cry);
   Serial.print(d);
   Serial.print(" vs. ");
   Serial.print(VD);
@@ -147,22 +168,21 @@ void victory(){
   Serial.print(round((millis()-us)/1000));
   Serial.println(" seconds");
 
-  // notify display
-  for (int i=0; i<20; i+=2){
-      digitalWrite(LEDPIN, j++%2);
-      oled.drawCircle(tx, ty, TARGET_R+i, WHITE);
+  // notify display (explode target)
+  for (int i=0; i<30; i+=3){
+      oled.drawCircle(ex, ey, TARGET_R+i, WHITE);
       oled.display();
-      delay(100);
+      delay(66);
   }
 
   oled.clearDisplay();
   oled.setTextSize(2);
   oled.setTextColor(WHITE);
   oled.setCursor(20,25);
-  oled.print("Victory! ");
+  oled.print(cry);
   oled.display();
 
-  // wait 5 seconds and restart
+  // wait 2 seconds and restart
   delay(2000);
   init_game();
 }
@@ -176,7 +196,8 @@ void setup() {
   pinMode(A1, INPUT);
 
   // LED connected here
-  pinMode(LEDPIN, OUTPUT);
+  pinMode(GRNPIN, OUTPUT);
+  pinMode(REDPIN, OUTPUT);
 
   // good for debugging
   Serial.begin(9600);
@@ -184,9 +205,9 @@ void setup() {
   // set up display
   oled.begin();
   
-  // max x and y values
+  // max x and y values, leave hree pixels for the status bar
   mx=oled.width()-TARGET_R;
-  my=oled.height()-TARGET_R;
+  my=oled.height()-(TARGET_R+3);
   
   // init the game
   init_game();
@@ -199,17 +220,27 @@ void loop() {
   // get tumbstick vector
   int ix = map(analogRead(A0),THUMB_MIN_X,THUMB_MAX_X,3,-3);
   int iy = map(analogRead(A1),THUMB_MIN_Y,THUMB_MAX_Y,-3,3);
-
+  
   // adjust and constrain position
   px+=ix; py+=iy;
   px=px<ZP?ZP:px; px=px>mx?mx:px;
   py=py<ZP?ZP:py; py=py>my?my:py;
 
-  d=get_distance();
-  if (d<VD){victory();}else{draw_field();}
+  // update status bar every 0.1 seconds or so
+  if (millis()>us+100){
+    syrial();
+    us=millis();
+  }
+  
+  int game=-1;
+  if (get_distance() < VD){ game=1; }      // Victory
+  if (millis()-init_us > 10000){ game=0; } // Defeat
 
-  // blink LED and output to serial once per second
-  if (millis()>us+5000){syrial();us=millis();}
+  if (game > -1) {
+    game_over(game);
+  }else{
+    draw_field();
+  }
 }
 // -----------------------------------------------------------------------------
 
