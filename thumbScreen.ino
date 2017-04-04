@@ -1,5 +1,10 @@
 // -----------------------------------------------------------------------------
-// Game 1. touch the circle.
+// File:   thumbScreen.ino
+// Desc:   a simple game
+// Source: https://github.com/DidymusRex/thumbScreen
+// License: This work is licensed under a Creative Commons 
+//          Attribution-ShareAlike 4.0 International License.
+//          https://creativecommons.org/licenses/by-sa/4.0/legalcode
 // -----------------------------------------------------------------------------
 #include <Wire.h>
 #include <Adafruit_GFX.h>
@@ -84,9 +89,9 @@ void init_game(){
   oled.setTextSize(1);
   oled.setCursor(10,0);
   oled.print("Arduino ");
-  oled.print(pw);
+  oled.print(pl;
   oled.print(" Human ");
-  oled.print(pl);
+  oled.print(pw);
   
   // Go!
   oled.setTextSize(2);
@@ -254,10 +259,10 @@ void loop() {
   }
 #endif
   
-  int g=-1;                               // Undecided
-  if (get_distance() < VD){ g=HIGH; }     // Victory
+  int g=-1;                                       // Undecided
+  if (get_distance() < VD){ g=HIGH; }             // Victory
   if (millis()-init_us > TIME_LIMIT_US){ g=LOW; } // Defeat
-  (g>-1)?game_over(g):draw_field();       // Win, lose or draw
+  (g>-1)?game_over(g):draw_field();               // Win, lose or draw
 }
 // -----------------------------------------------------------------------------
 
